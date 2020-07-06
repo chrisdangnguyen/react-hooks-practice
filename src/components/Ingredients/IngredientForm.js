@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import Card from '../UI/Card';
 import './IngredientForm.css';
+import LoadingIndicator from '../UI/LoadingIndicator';
 
 const IngredientForm = React.memo(props => {
   // usestate have to be used in your functional component, useState can be anything object, string, number, etc. doesn't have to be object. always return an array with two elements. 
@@ -50,6 +51,7 @@ const IngredientForm = React.memo(props => {
           </div>
           <div className="ingredient-form__actions">
             <button type="submit">Add Ingredient</button>
+            {props.loading && <LoadingIndicator/> }  
           </div>
         </form>
       </Card>

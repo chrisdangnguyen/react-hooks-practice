@@ -2,6 +2,7 @@ import React from 'react';
 
 import './IngredientList.css';
 
+
 const IngredientList = props => {
   return (
     <section className="ingredient-list">
