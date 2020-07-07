@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useReducer, Component } from 'react';
+import React, { useState, useEffect, useCallback, useReducer } from 'react';
 
 import IngredientForm from './IngredientForm';
 import IngredientList from './IngredientList';
@@ -22,6 +22,21 @@ const ingredientReducer = (currentIngredients, action) => {
 }
 
 
+const httpReducer = (currHttpState, action) => {
+  switch (action.type) {
+    case 'SEND':
+      return {loading: true, error: null};
+    case 'RESPONSE':
+      return { ...currHttpState, loading: false}
+    case 'ERROR':
+      return {loading: false, error: action.errorMessage }
+    case 'CLEAR':
+      return  {...currHttpState, error: null}
+    default: 
+      throw new Error('Should not get here')
+  }
+}
+
 const Ingredients = () => {
   //need to initalise the reducer. takes the reducer function and an optional second argument which is the starting state. this case just an empty array
   // dispatching function the action 
@@ -29,8 +44,9 @@ const Ingredients = () => {
   //if you depend on the older state or need to update new state based on some other new state on some other state object then we can useReducer
   const [userIngredients, dispatch] = useReducer(ingredientReducer, [])
   // const [userIngredients, setUserIngredients] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState()
+  const [httpState, dispatchHttp] = useReducer(httpReducer, {loading: false, error: null})
+  // const [isLoading, setIsLoading] = useState(false);
+  // const [error, setError] = useState()
 
   //useeffect gets run after everything in the component cycle, rendered after and every render cycle
   //useeffect acts like componentDidUpdate: it runs the function after every component update(re-rendered)
@@ -45,7 +61,8 @@ const Ingredients = () => {
 
 
   const addIngredientHandler = ingredient => {
-    setIsLoading(true);
+    // setIsLoading(true);
+    dispatchHttp({type: 'SEND'})
     // set new ingredient array. by getting the old array and speading and adding a new element to the ingredient array
     //fecth is a builtin http request. it is defaulted to get, but if provided a 2nd argument pass in object with diffrent method and body
     fetch('https://react-hooks-update-7f5ce.firebaseio.com/ingredients.json', {
@@ -53,7 +70,8 @@ const Ingredients = () => {
       body: JSON.stringify(ingredient),
       headers: {'Content-Type': 'application/json'}
     }).then(response => {
-      setIsLoading(false);
+      // setIsLoading(false);
+      dispatchHttp({type: 'RESPONSE'})
       return response.json();
     }).then(responseData => {
       // setUserIngredients(prevIngredients => [...prevIngredients, {id: responseData.name, ...ingredient}]); 
@@ -63,30 +81,34 @@ const Ingredients = () => {
 
 
   const removeIngredientHandler = ingredientId => {
-    setIsLoading(true);
+    // setIsLoading(true);
+    dispatchHttp({ type: 'SEND' })
     fetch(`https://react-hooks-update-7f5ce.firebaseio.com/ingredients/${ingredientId}.json`, {
       method: 'DELETE'
     }).then(response => {
-      setIsLoading(false);
+      // setIsLoading(false);
+      dispatchHttp({ type: 'RESPONSE' })
       // setUserIngredients(prevIngredients => prevIngredients.filter(ingredient => ingredient.id !== ingredientId));
       dispatch({type: 'DELETE', id: ingredientId})
     }).catch(error => {
-      setError(error.message)
-      setIsLoading(false)
+      dispatchHttp({type: 'ERROR', errorMessage: error.message})
+      // setError(error.message)
+      // setIsLoading(false)
     });
   }
 
 
   const clearError = () => {
-    setError(null);
+    // setError(null);
+    dispatchHttp({type: 'CLEAR'})
   }
 
   return (
     <div className="App">
-      {error && <ErrorModal onClose={clearError}>{error}</ErrorModal>}
+      {httpState.error && <ErrorModal onClose={clearError}>{httpState.error}</ErrorModal>}
       <IngredientForm 
         onAddIngredient={addIngredientHandler}
-        loading={isLoading}/>
+        loading={httpState.loading}/>
 
       <section>
         <Search onLoadIngredients={filteredIngredientsHandler} />
